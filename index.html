@@ -160,6 +160,46 @@ button { cursor: pointer; font-family: 'Source Sans 3', sans-serif; transition: 
   text-transform: uppercase;
 }
 .card-body { padding: 14px 16px; }
+.sticky-week-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border-bottom: 2px solid;
+}
+.sticky-week-header.current {
+  background: #e8f0eb;
+  border-color: #2d5a3d;
+}
+.sticky-week-header.future {
+  background: #fffbe6;
+  border-color: #e6c84a;
+}
+.sticky-week-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.sticky-week-header.current .sticky-week-badge {
+  background: #2d5a3d;
+  color: white;
+}
+.sticky-week-header.future .sticky-week-badge {
+  background: #e6c84a;
+  color: #4a3800;
+}
+.sticky-week-label {
+  font-size: 13px;
+  font-weight: 500;
+}
+.sticky-week-header.current .sticky-week-label { color: #1a3a2a; }
+.sticky-week-header.future .sticky-week-label  { color: #7a6000; }
+
 .section-divider {
   background: var(--bg);
   border-top: 1px solid var(--border);
@@ -1212,7 +1252,15 @@ function renderSetupContent(isFuture) {
   const wSuffix = wh < 12 ? 'AM' : 'PM';
   const weekTeeDisplay = `${wDispH}:${String(wm).padStart(2,'0')} ${wSuffix}`;
 
+  const weekDateLabel = weekLabel(isFuture ? futureWeekEditing : state.weekNum);
+  const stickyType = isFuture ? 'future' : 'current';
+  const stickySubLabel = isFuture ? 'Future week — entering requests' : 'Current week';
+
   return `
+    <div class="sticky-week-header ${stickyType}">
+      <span class="sticky-week-badge">${weekDateLabel}</span>
+      <span class="sticky-week-label">${stickySubLabel}</span>
+    </div>
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-num">${active.length}</div><div class="stat-label">Playing</div></div>
       <div class="stat-card"><div class="stat-num red">${absent}</div><div class="stat-label">Absent</div></div>
@@ -1385,7 +1433,15 @@ function renderHistory() {
       ).join('')
     : '<p style="color:var(--text-muted);font-size:13px">No weeks committed yet.</p>';
 
+  const weekDateLabel = weekLabel(isFuture ? futureWeekEditing : state.weekNum);
+  const stickyType = isFuture ? 'future' : 'current';
+  const stickySubLabel = isFuture ? 'Future week — entering requests' : 'Current week';
+
   return `
+    <div class="sticky-week-header ${stickyType}">
+      <span class="sticky-week-badge">${weekDateLabel}</span>
+      <span class="sticky-week-label">${stickySubLabel}</span>
+    </div>
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-num">${state.weekNum - 1}</div><div class="stat-label">Weeks Played</div></div>
       <div class="stat-card"><div class="stat-num">${uniquePairings}</div><div class="stat-label">Unique Pairings</div></div>
