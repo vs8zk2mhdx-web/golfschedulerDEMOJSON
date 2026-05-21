@@ -196,7 +196,7 @@ button { cursor: pointer; font-family: 'Source Sans 3', sans-serif; transition: 
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  border-bottom: 1px solid rgba(0,0,0,0.15);
+  border-bottom: 1px solid rgba(0,0,0,0.30);
   cursor: pointer;
   transition: background 0.1s;
   user-select: none;
@@ -1219,7 +1219,7 @@ function renderSetupContent(isFuture) {
       <div class="stat-card"><div class="stat-num blue">${reqCount}</div><div class="stat-label">Requests</div></div>
     </div>
     ${!isFuture ? buildTeeTimeBar(weekTeeDisplay) : ''}
-    <div class="card" style="${isFuture ? 'background-image:repeating-linear-gradient(135deg,rgba(0,0,0,0.15) 0px,rgba(0,0,0,0.15) 2px,transparent 2px,transparent 18px);' : ''}">
+    <div class="card" style="${isFuture ? 'background-image:repeating-linear-gradient(135deg,rgba(0,0,0,0.15) 0px,rgba(0,0,0,0.15) 2px,transparent 2px,transparent 20px);' : ''}">
       <div class="card-header">Roster — Click a Name to Manage</div>
       <div class="card-body" style="padding-bottom:8px">
         <input class="search-input" placeholder="Search players…" value="${esc(searchTerm)}"
