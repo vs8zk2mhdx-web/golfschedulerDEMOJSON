@@ -1433,15 +1433,7 @@ function renderHistory() {
       ).join('')
     : '<p style="color:var(--text-muted);font-size:13px">No weeks committed yet.</p>';
 
-  const weekDateLabel = weekLabel(isFuture ? futureWeekEditing : state.weekNum);
-  const stickyType = isFuture ? 'future' : 'current';
-  const stickySubLabel = isFuture ? 'Future week — entering requests' : 'Current week';
-
   return `
-    <div class="sticky-week-header ${stickyType}">
-      <span class="sticky-week-badge">${weekDateLabel}</span>
-      <span class="sticky-week-label">${stickySubLabel}</span>
-    </div>
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-num">${state.weekNum - 1}</div><div class="stat-label">Weeks Played</div></div>
       <div class="stat-card"><div class="stat-num">${uniquePairings}</div><div class="stat-label">Unique Pairings</div></div>
