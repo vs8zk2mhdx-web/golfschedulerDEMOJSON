@@ -1177,7 +1177,9 @@ function renderSetupContent(isFuture) {
 
   const active   = ROSTER.filter(p => !weekly.optOuts[p.name]);
   const absent   = ROSTER.length - active.length;
-  const reqCount = Object.values(weekly.specialRequests).filter(r => r && r.type).length;
+  const reqCount = Object.values(weekly.specialRequests).filter(r =>
+    r && r.type && (r.type === 'early' || r.type === 'late' || r.type === 'carpoolSplit' ||
+    ((r.type === 'not_before' || r.type === 'not_after') && r.time))).length;
 
   const roster18 = ROSTER.filter(p => p.holes === 18);
   const roster9  = ROSTER.filter(p => p.holes === 9);
@@ -1189,7 +1191,9 @@ function renderSetupContent(isFuture) {
     const isOut = !!weekly.optOuts[p.name];
     const isExp = expandedPlayer === p.name;
     const req   = weekly.specialRequests[p.name];
-    const hasReq = req && req.type;
+    const hasReq = req && req.type &&
+      (req.type === 'early' || req.type === 'late' || req.type === 'carpoolSplit' ||
+       ((req.type === 'not_before' || req.type === 'not_after') && req.time));
     const rn = escAttr(p.name);
     return `
       <div class="player-row${isOut?' absent':''}${isExp?' expanded':''}"
