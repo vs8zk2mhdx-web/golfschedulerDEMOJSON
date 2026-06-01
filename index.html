@@ -1108,7 +1108,14 @@ function setReqType(rawName, type) {
   if (!type) {
     delete w.specialRequests[rawName];
   } else {
-    w.specialRequests[rawName] = { ...(w.specialRequests[rawName] || {}), type };
+    // Always reset time when switching type — prevents stale time values
+    // from a previous request type bleeding into the new one
+    const needsTime = (type === 'not_before' || type === 'not_after');
+    w.specialRequests[rawName] = {
+      type,
+      ...(needsTime ? {} : {}),  // time intentionally omitted — resets to default
+      carpoolSplit: (w.specialRequests[rawName] || {}).carpoolSplit || false
+    };
   }
   if (futureWeekEditing) saveFutureWeekData();
   else currentAssignments = null;
