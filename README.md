@@ -2,4 +2,5 @@ This is current Golf Scheduler with pairs kept together and modification of rost
 May 3, 2026 6:07 pm 
 May 17th: new index file for a bug fix--the app did not automatically refresh from cloud upton opening with a click. the app was refreshing when the user moved awaty from windows or tabs, but oddly, not when the user quit and restarted.
 May 21 change: The screens for future weeks now have diagonal stripes running throuogh them, to help user know that she is changing a future week, not a current week.
-June 2 change: regenerate buttom removed from review tee sheet window. bug about assigneing latest tee time for nine hole players fixed. message about pasting into Mailchimp changed to pasting to document or mail.
+June 1 change: regenerate buttom removed from review tee sheet window. bug about assigneing latest tee time for nine hole players fixed. message about pasting into Mailchimp changed to pasting to document or mail.
+June 1 change: added tee time assignment history report, under Roster tab
