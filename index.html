@@ -1473,11 +1473,15 @@ function scheduleWeek() {
     return state.pairingHistory[[a, b].sort().join('|')] || 0;
   }
 
-  // Compute block slot index arrays
+  // Compute block slot index arrays — trimmed to actual player count
+  // so that early/late requests are relative to occupied slots only,
+  // not the full 35-slot tee sheet.
   const n18      = players18.length;
-  const nSlots18 = Math.ceil(n18 / 4);
-  const slots18  = TEE_TIMES.slice(0, Math.max(nSlots18, 1)).map((_, i) => i);
-  const slots9   = TEE_TIMES.slice(slots18.length).map((_, i) => i + slots18.length);
+  const n9       = players9.length;
+  const nSlots18 = Math.max(Math.ceil(n18 / 4), 1);
+  const nSlots9  = Math.max(Math.ceil(n9  / 4), 1);
+  const slots18  = TEE_TIMES.slice(0, nSlots18).map((_, i) => i);
+  const slots9   = TEE_TIMES.slice(nSlots18, nSlots18 + nSlots9).map((_, i) => i + nSlots18);
 
   // Allowed slots for a player given a block's slot array.
   // Returns the subset of blockSlots satisfying the constraint.
@@ -2018,16 +2022,6 @@ function doGenerate() {
   }
 }
 
-function doRegenerate() {
-  try {
-    currentAssignments = scheduleWeek();
-    render();
-  } catch(e) {
-    console.error('Schedule error:', e);
-    alert('Error regenerating: ' + e.message);
-  }
-}
-
 function doReset() {
   swapSelection = null;
   if (confirm('Reset this week? All absences and requests will be cleared. Season history is untouched.')) {
@@ -2391,7 +2385,7 @@ function copyTeeSheet(weekIndex) {
     const textBlob  = new Blob([plainText], { type: 'text/plain' });
     const item      = new ClipboardItem({ 'text/html': htmlBlob, 'text/plain': textBlob });
     navigator.clipboard.write([item]).then(() => {
-      showToast('Tee sheet copied — paste into Mailchimp!');
+      showToast('Copied to Clipboard. Ready to paste into a document or mail.');
     }).catch(() => {
       // Fallback: plain text only
       navigator.clipboard.writeText(plainText).then(() => {
