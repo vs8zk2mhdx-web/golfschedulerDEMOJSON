@@ -595,7 +595,7 @@ button { cursor: pointer; font-family: 'Source Sans 3', sans-serif; transition: 
     <div class="dropdown-menu" id="futureMenu"></div>
   </div>
   <div class="nav-dropdown" id="rosterDropdown">
-    <button class="nav-btn" id="nav-roster" onclick="toggleRosterMenu()">Roster ▾</button>
+    <button class="nav-btn" id="nav-roster" onclick="toggleRosterMenu()">Roster and Season Data ▾</button>
     <div class="dropdown-menu" id="rosterMenu">
       <button class="dropdown-item" onclick="showScreen('viewRoster');document.getElementById('rosterMenu').classList.remove('open')">👁 View Roster</button>
       <button class="dropdown-item" onclick="downloadCurrentRoster();document.getElementById('rosterMenu').classList.remove('open')">⬇ Download Roster</button>
@@ -603,6 +603,7 @@ button { cursor: pointer; font-family: 'Source Sans 3', sans-serif; transition: 
       <button class="dropdown-item" onclick="showAddPlayerModal();document.getElementById('rosterMenu').classList.remove('open')">+ Add Person</button>
       <button class="dropdown-item" onclick="showScreen('deletePerson');document.getElementById('rosterMenu').classList.remove('open')">✕ Delete Person</button>
       <button class="dropdown-item" onclick="showScreen('teeTimeHistory');document.getElementById('rosterMenu').classList.remove('open')">📊 Tee Time History</button>
+      <button class="dropdown-item" onclick="showScreen('futureRequestsSummary');document.getElementById('rosterMenu').classList.remove('open')">📋 Future Requests Summary</button>
     </div>
   </div>
 </nav>
@@ -1064,7 +1065,7 @@ function showScreen(name) {
   currentScreen = name;
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   // Roster sub-screens highlight the Roster dropdown button
-  const rosterScreens = ['viewRoster', 'manageGroups', 'deletePerson', 'teeTimeHistory'];
+  const rosterScreens = ['viewRoster', 'manageGroups', 'deletePerson', 'teeTimeHistory', 'futureRequestsSummary'];
   const navId = rosterScreens.includes(name) ? 'nav-roster' : 'nav-' + name;
   const navBtn = document.getElementById(navId);
   if (navBtn) navBtn.classList.add('active');
@@ -1081,6 +1082,7 @@ function render() {
   else if (currentScreen === 'manageGroups') main.innerHTML = renderManageGroups();
   else if (currentScreen === 'deletePerson') main.innerHTML = renderDeletePerson();
   else if (currentScreen === 'teeTimeHistory') main.innerHTML = renderTeeTimeHistory();
+  else if (currentScreen === 'futureRequestsSummary') main.innerHTML = renderFutureRequestsSummary();
   else                                        main.innerHTML = renderHistory();
 }
 
@@ -2595,13 +2597,14 @@ function buildTeeTimeHistoryData() {
     holes: p.holes,
     deleted: p.deleted || false,
     times: weekMaps.map(map => map[p.name] || '—')
-  }));
+  }))
+  .filter(p => p.times.some(t => t !== '—'))
+  .sort((a, b) => {
+    if (a.holes !== b.holes) return b.holes - a.holes; // 18 before 9
+    return a.name.localeCompare(b.name);
+  });
 
-  // Only include players who appeared in at least one week
-  return {
-    weeks,
-    players: players.filter(p => p.times.some(t => t !== '—'))
-  };
+  return { weeks, players };
 }
 
 function renderTeeTimeHistory() {
@@ -2690,6 +2693,142 @@ function downloadTeeTimeHistoryCSV() {
   a.click();
   document.body.removeChild(a);
   showToast('Tee time history downloaded');
+}
+
+// ── FUTURE REQUESTS SUMMARY ──────────────────────────────────────────────
+function buildFutureRequestsSummaryData() {
+  const futureWeeks = state.futureWeeks || {};
+  const currentWeek = state.weekNum;
+
+  // Only future weeks
+  const weeks = Object.keys(futureWeeks)
+    .map(Number)
+    .filter(w => w > currentWeek)
+    .sort((a, b) => a - b);
+
+  if (!weeks.length) return null;
+
+  // Get full roster sorted: 18-hole first, then alphabetically
+  const fullRoster = (state.customRoster || ROSTER)
+    .map(p => ({ ...p, name: cleanName(p.name) }))
+    .filter(p => !p.deleted)
+    .sort((a, b) => {
+      if (a.holes !== b.holes) return b.holes - a.holes;
+      return a.name.localeCompare(b.name);
+    });
+
+  const TYPE_SHORT = { early: 'Early', late: 'Late', not_before: 'Not Before', not_after: 'Not After' };
+
+  // Build player rows — only include players with at least one entry
+  const players = fullRoster.map(p => {
+    const entries = weeks.map(w => {
+      const wData = futureWeeks[w] || {};
+      const isAbsent = !!(wData.optOuts || {})[p.name];
+      const req = (wData.specialRequests || {})[p.name];
+      const hasReq = req && req.type &&
+        (req.type === 'early' || req.type === 'late' ||
+         ((req.type === 'not_before' || req.type === 'not_after') && req.time));
+      if (isAbsent) return 'Absent';
+      if (hasReq) {
+        const label = TYPE_SHORT[req.type] || req.type;
+        return req.time ? `${label} ${fmtTime(req.time)}` : label;
+      }
+      return '';
+    });
+    const hasAny = entries.some(e => e !== '');
+    return { name: p.name, holes: p.holes, entries, hasAny };
+  }).filter(p => p.hasAny);
+
+  return { weeks, players };
+}
+
+function renderFutureRequestsSummary() {
+  const data = buildFutureRequestsSummaryData();
+  if (!data) return `<div style="padding:40px;text-align:center;color:var(--text-muted)">No future week data entered yet.</div>`;
+
+  const { weeks, players } = data;
+
+  const weekHeaders = weeks.map(w =>
+    `<th style="padding:6px 10px;border:1px solid #ddd;background:#e8f0eb;font-size:12px;
+                white-space:nowrap;text-align:center;color:var(--green-dark)">
+      Wk ${w}<br><span style="font-weight:400;font-size:11px">${formatWeekDate(w).replace(/,.*$/,'')}</span>
+    </th>`
+  ).join('');
+
+  // Group header rows
+  let lastHoles = null;
+  const rows = players.map(p => {
+    let groupHeader = '';
+    if (p.holes !== lastHoles) {
+      lastHoles = p.holes;
+      groupHeader = `<tr><td colspan="${weeks.length + 2}"
+        style="padding:6px 12px;background:#f5faf6;font-size:12px;font-weight:700;
+               color:var(--green-dark);border:1px solid #ddd;text-transform:uppercase;
+               letter-spacing:0.5px">${p.holes}-Hole Players</td></tr>`;
+    }
+    const cells = p.entries.map(e =>
+      `<td style="padding:5px 10px;border:1px solid #eee;text-align:center;font-size:12px;
+                  white-space:nowrap;
+                  ${e === 'Absent' ? 'color:#cc0000;font-weight:600;' :
+                    e ? 'color:#2d5a3d;font-weight:500;' : 'color:#ddd;'}">${e || '—'}</td>`
+    ).join('');
+    return `${groupHeader}<tr>
+      <td style="padding:6px 12px;border:1px solid #eee;font-size:13px;white-space:nowrap">${esc(p.name)}</td>
+      <td style="padding:6px 8px;border:1px solid #eee;text-align:center;font-size:12px;
+                 color:var(--text-muted)">${p.holes}</td>
+      ${cells}
+    </tr>`;
+  }).join('');
+
+  return `
+    <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;
+                color:var(--green-dark);margin-bottom:4px">Future Requests Summary</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">
+      ${players.length} players with entries · Weeks ${weeks[0]}–${weeks[weeks.length-1]} ·
+      18-hole players first, then alphabetical
+    </div>
+    <div style="margin-bottom:12px">
+      <button class="btn-ghost dark btn-sm" onclick="downloadFutureRequestsSummaryCSV()">⬇ Download as CSV</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table style="border-collapse:collapse;width:100%;min-width:400px">
+        <thead>
+          <tr>
+            <th style="padding:6px 12px;border:1px solid #ddd;background:#e8f0eb;font-size:13px;
+                       text-align:left;color:var(--green-dark)">Player</th>
+            <th style="padding:6px 8px;border:1px solid #ddd;background:#e8f0eb;font-size:12px;
+                       text-align:center;color:var(--green-dark)">Holes</th>
+            ${weekHeaders}
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+function downloadFutureRequestsSummaryCSV() {
+  const data = buildFutureRequestsSummaryData();
+  if (!data) { showToast('No future data to download'); return; }
+
+  const { weeks, players } = data;
+  const header = ['Player', 'Holes', ...weeks.map(w => `Wk ${w} (${formatWeekDate(w)})`)];
+  const rows = players.map(p => [p.name, p.holes, ...p.entries]);
+
+  const csv = [header, ...rows].map(row =>
+    row.map(cell => {
+      const s = String(cell);
+      return s.includes(',') || s.includes('"') ? `"${s.replace(/"/g, '""')}"` : s;
+    }).join(',')
+  ).join('\n');
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'golf-league-future-requests-summary.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast('Future requests summary downloaded');
 }
 
 // ── ROSTER DROPDOWN ───────────────────────────────────────────────────────
