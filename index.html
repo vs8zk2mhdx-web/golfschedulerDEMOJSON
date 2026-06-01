@@ -2666,8 +2666,7 @@ function downloadTeeTimeHistoryCSV() {
   const csv = [header, ...rows].map(row =>
     row.map(cell => {
       const s = String(cell);
-      return s.includes(',') || s.includes('"') || s.includes('
-')
+      return s.includes(',') || s.includes('"') || s.includes('\n')
         ? `"${s.replace(/"/g, '""')}"` : s;
     }).join(',')
   ).join('\n');
