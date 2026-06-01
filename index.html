@@ -602,6 +602,7 @@ button { cursor: pointer; font-family: 'Source Sans 3', sans-serif; transition: 
       <button class="dropdown-item" onclick="showScreen('manageGroups');document.getElementById('rosterMenu').classList.remove('open')">🚗 Manage Groups</button>
       <button class="dropdown-item" onclick="showAddPlayerModal();document.getElementById('rosterMenu').classList.remove('open')">+ Add Person</button>
       <button class="dropdown-item" onclick="showScreen('deletePerson');document.getElementById('rosterMenu').classList.remove('open')">✕ Delete Person</button>
+      <button class="dropdown-item" onclick="showScreen('teeTimeHistory');document.getElementById('rosterMenu').classList.remove('open')">📊 Tee Time History</button>
     </div>
   </div>
 </nav>
@@ -1063,7 +1064,7 @@ function showScreen(name) {
   currentScreen = name;
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   // Roster sub-screens highlight the Roster dropdown button
-  const rosterScreens = ['viewRoster', 'manageGroups', 'deletePerson'];
+  const rosterScreens = ['viewRoster', 'manageGroups', 'deletePerson', 'teeTimeHistory'];
   const navId = rosterScreens.includes(name) ? 'nav-roster' : 'nav-' + name;
   const navBtn = document.getElementById(navId);
   if (navBtn) navBtn.classList.add('active');
@@ -1079,6 +1080,7 @@ function render() {
   else if (currentScreen === 'viewRoster')   main.innerHTML = renderViewRoster();
   else if (currentScreen === 'manageGroups') main.innerHTML = renderManageGroups();
   else if (currentScreen === 'deletePerson') main.innerHTML = renderDeletePerson();
+  else if (currentScreen === 'teeTimeHistory') main.innerHTML = renderTeeTimeHistory();
   else                                        main.innerHTML = renderHistory();
 }
 
@@ -2546,6 +2548,139 @@ function resetTeeTime() {
   saveToStorage();
   render();
   showToast('Start time reset to season default');
+}
+
+// ── TEE TIME HISTORY REPORT ──────────────────────────────────────────────
+function buildTeeTimeHistoryData() {
+  // Returns { weeks, players } where:
+  //   weeks  = array of { week, date } for each committed week
+  //   players = array of { name, holes, times[] } — times indexed by week position
+  const history = state.weeklyHistory || [];
+  if (!history.length) return null;
+
+  const weeks = history.map(w => ({ week: w.week, date: w.date || formatWeekDate(w.week) }));
+
+  // Build a lookup: weekIndex -> map of playerName -> tee time label
+  const weekMaps = history.map(w => {
+    const map = {};
+    if (w.assignments) {
+      for (const slot of w.assignments) {
+        const timeLabel = TEE_TIMES[slot.si] ? TEE_TIMES[slot.si].label : '';
+        for (const p of slot.players) {
+          map[p.name] = timeLabel;
+        }
+      }
+    }
+    return map;
+  });
+
+  // Build player rows — use full roster (including inactive) so history is complete
+  const fullRoster = (state.customRoster || ROSTER)
+    .map(p => ({ ...p, name: cleanName(p.name) }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const players = fullRoster.map(p => ({
+    name: p.name,
+    holes: p.holes,
+    deleted: p.deleted || false,
+    times: weekMaps.map(map => map[p.name] || '—')
+  }));
+
+  // Only include players who appeared in at least one week
+  return {
+    weeks,
+    players: players.filter(p => p.times.some(t => t !== '—'))
+  };
+}
+
+function renderTeeTimeHistory() {
+  const data = buildTeeTimeHistoryData();
+  if (!data) return `<div style="padding:40px;text-align:center;color:var(--text-muted)">No committed weeks yet — history will appear here after the first week is committed.</div>`;
+
+  const { weeks, players } = data;
+
+  // Build table header
+  const weekHeaders = weeks.map(w =>
+    `<th style="padding:6px 10px;border:1px solid #ddd;background:#e8f0eb;font-size:12px;
+                white-space:nowrap;text-align:center;color:var(--green-dark)">
+      Wk ${w.week}<br><span style="font-weight:400;font-size:11px">${w.date.replace(/,.*$/,'')}</span>
+    </th>`
+  ).join('');
+
+  // Build table rows
+  const rows = players.map(p => {
+    const timeCells = p.times.map(t =>
+      `<td style="padding:5px 10px;border:1px solid #eee;text-align:center;font-size:13px;
+                  color:${t === '—' ? '#bbb' : '#333'}">${t}</td>`
+    ).join('');
+    return `<tr>
+      <td style="padding:6px 12px;border:1px solid #eee;font-size:13px;white-space:nowrap;
+                 ${p.deleted ? 'color:#bbb;font-style:italic;' : ''}">${esc(p.name)}</td>
+      <td style="padding:6px 10px;border:1px solid #eee;text-align:center;font-size:13px;
+                 color:var(--text-muted)">${p.holes}</td>
+      ${timeCells}
+    </tr>`;
+  }).join('');
+
+  return `
+    <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;
+                color:var(--green-dark);margin-bottom:4px">Tee Time History</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">
+      ${players.length} players · ${weeks.length} weeks played · sorted alphabetically
+    </div>
+    <div style="margin-bottom:12px">
+      <button class="btn-ghost dark btn-sm" onclick="downloadTeeTimeHistoryCSV()">⬇ Download as CSV</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table style="border-collapse:collapse;width:100%;min-width:400px">
+        <thead>
+          <tr>
+            <th style="padding:6px 12px;border:1px solid #ddd;background:#e8f0eb;font-size:13px;
+                       text-align:left;color:var(--green-dark)">Player</th>
+            <th style="padding:6px 10px;border:1px solid #ddd;background:#e8f0eb;font-size:12px;
+                       text-align:center;color:var(--green-dark)">Holes</th>
+            ${weekHeaders}
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+function downloadTeeTimeHistoryCSV() {
+  const data = buildTeeTimeHistoryData();
+  if (!data) { showToast('No history to download'); return; }
+
+  const { weeks, players } = data;
+
+  // Header row
+  const header = ['Player', 'Holes', ...weeks.map(w => `Wk ${w.week} (${w.date})`)];
+
+  // Data rows
+  const rows = players.map(p => [
+    p.name,
+    p.holes,
+    ...p.times
+  ]);
+
+  const csv = [header, ...rows].map(row =>
+    row.map(cell => {
+      const s = String(cell);
+      return s.includes(',') || s.includes('"') || s.includes('
+')
+        ? `"${s.replace(/"/g, '""')}"` : s;
+    }).join(',')
+  ).join('
+');
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `golf-league-tee-time-history.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast('Tee time history downloaded');
 }
 
 // ── ROSTER DROPDOWN ───────────────────────────────────────────────────────
