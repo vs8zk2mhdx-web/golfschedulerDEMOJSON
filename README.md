@@ -4,3 +4,4 @@ May 17th: new index file for a bug fix--the app did not automatically refresh fr
 May 21 change: The screens for future weeks now have diagonal stripes running throuogh them, to help user know that she is changing a future week, not a current week.
 June 1 change: regenerate buttom removed from review tee sheet window. bug about assigneing latest tee time for nine hole players fixed. message about pasting into Mailchimp changed to pasting to document or mail.
 June 1 change: added tee time assignment history report, under Roster tab
+June 1 change: bug was fixed about how the default time is set in the clock icon when changing a particular player's time constraints.
