@@ -2581,10 +2581,10 @@ function computeStats(times, holes) {
   const mins = times.map(parseTeeTimeMins).filter(m => m !== null);
   if (holes === 18) {
     // Column 1: <= 9:00 AM (540 mins)
-    // Column 2: > 9:45 AM (585 mins)
+    // Column 2: > 9:00 AM (540 mins)
     return [
       mins.filter(m => m <= 540).length,
-      mins.filter(m => m > 585).length
+      mins.filter(m => m > 540).length
     ];
   } else {
     // Column 1: >= 9:30 (570) AND <= 10:00 (600)
@@ -2711,7 +2711,7 @@ function renderTeeTimeHistory() {
   }
 
   const table18 = buildTable(players18,
-    ['≤ 9:00 AM', '> 9:45 AM'],
+    ['≤ 9:00 AM', '> 9:00 AM'],
     '18-Hole Players');
 
   const table9 = buildTable(players9,
@@ -2759,7 +2759,7 @@ function downloadTeeTimeHistoryCSV() {
     ).join('\n');
   }
 
-  const header18 = [...baseHeaders, '<= 9:00 AM', '> 9:45 AM'];
+  const header18 = [...baseHeaders, '<= 9:00 AM', '> 9:00 AM'];
   const header9  = [...baseHeaders, '9:30-10:00', '10:00-10:30', '10:30-11:00', 'After 11:00'];
 
   const csv = [
