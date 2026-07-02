@@ -2564,10 +2564,46 @@ function resetTeeTime() {
 }
 
 // ── TEE TIME HISTORY REPORT ──────────────────────────────────────────────
+// Parse a tee time label like "10:04 AM" or "9:30 AM" into total minutes since midnight
+function parseTeeTimeMins(label) {
+  if (!label || label === '—') return null;
+  const m = label.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!m) return null;
+  let h = parseInt(m[1]), min = parseInt(m[2]);
+  const pm = m[3].toUpperCase() === 'PM';
+  if (pm && h !== 12) h += 12;
+  if (!pm && h === 12) h = 0;
+  return h * 60 + min;
+}
+
+// Compute distribution stats for a player's times based on holes played
+function computeStats(times, holes) {
+  const mins = times.map(parseTeeTimeMins).filter(m => m !== null);
+  if (holes === 18) {
+    // Column 1: <= 9:00 AM (540 mins)
+    // Column 2: > 9:45 AM (585 mins)
+    return [
+      mins.filter(m => m <= 540).length,
+      mins.filter(m => m > 585).length
+    ];
+  } else {
+    // Column 1: >= 9:30 (570) AND <= 10:00 (600)
+    // Column 2: > 10:00 (600) AND <= 10:30 (630)
+    // Column 3: > 10:30 (630) AND <= 11:00 (660)
+    // Column 4: > 11:00 (660)
+    return [
+      mins.filter(m => m >= 570 && m <= 600).length,
+      mins.filter(m => m > 600 && m <= 630).length,
+      mins.filter(m => m > 630 && m <= 660).length,
+      mins.filter(m => m > 660).length
+    ];
+  }
+}
+
 function buildTeeTimeHistoryData() {
   // Returns { weeks, players } where:
   //   weeks  = array of { week, date } for each committed week
-  //   players = array of { name, holes, times[] } — times indexed by week position
+  //   players = array of { name, holes, times[], stats[] }
   const history = state.weeklyHistory || [];
   if (!history.length) return null;
 
@@ -2592,12 +2628,16 @@ function buildTeeTimeHistoryData() {
     .map(p => ({ ...p, name: cleanName(p.name) }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  const players = fullRoster.map(p => ({
-    name: p.name,
-    holes: p.holes,
-    deleted: p.deleted || false,
-    times: weekMaps.map(map => map[p.name] || '—')
-  }))
+  const players = fullRoster.map(p => {
+    const times = weekMaps.map(map => map[p.name] || '—');
+    return {
+      name: p.name,
+      holes: p.holes,
+      deleted: p.deleted || false,
+      times,
+      stats: computeStats(times, p.holes)
+    };
+  })
   .filter(p => p.times.some(t => t !== '—'))
   .sort((a, b) => {
     if (a.holes !== b.holes) return b.holes - a.holes; // 18 before 9
@@ -2613,6 +2653,9 @@ function renderTeeTimeHistory() {
 
   const { weeks, players } = data;
 
+  const statHdrStyle = 'padding:6px 8px;border:1px solid #ddd;background:#dde8ff;font-size:11px;white-space:nowrap;text-align:center;color:#1a2a5a;font-weight:700;';
+  const statCellStyle = 'padding:5px 8px;border:1px solid #eee;text-align:center;font-size:13px;font-weight:600;color:#1a2a5a;background:#f0f4ff;';
+
   // Build table header
   const weekHeaders = weeks.map(w =>
     `<th style="padding:6px 10px;border:1px solid #ddd;background:#e8f0eb;font-size:12px;
@@ -2621,44 +2664,73 @@ function renderTeeTimeHistory() {
     </th>`
   ).join('');
 
-  // Build table rows
-  const rows = players.map(p => {
-    const timeCells = p.times.map(t =>
-      `<td style="padding:5px 10px;border:1px solid #eee;text-align:center;font-size:13px;
-                  color:${t === '—' ? '#bbb' : '#333'}">${t}</td>`
-    ).join('');
-    return `<tr>
-      <td style="padding:6px 12px;border:1px solid #eee;font-size:13px;white-space:nowrap;
-                 ${p.deleted ? 'color:#bbb;font-style:italic;' : ''}">${esc(p.name)}</td>
-      <td style="padding:6px 10px;border:1px solid #eee;text-align:center;font-size:13px;
-                 color:var(--text-muted)">${p.holes}</td>
-      ${timeCells}
-    </tr>`;
-  }).join('');
+  // Stat column headers differ by holes group — we render two separate tables
+  const players18 = players.filter(p => p.holes === 18);
+  const players9  = players.filter(p => p.holes === 9);
+
+  function buildRows(pList) {
+    return pList.map(p => {
+      const timeCells = p.times.map(t =>
+        `<td style="padding:5px 10px;border:1px solid #eee;text-align:center;font-size:13px;
+                    color:${t === '—' ? '#bbb' : '#333'}">${t}</td>`
+      ).join('');
+      const statCells = p.stats.map(s =>
+        `<td style="${statCellStyle}">${s}</td>`
+      ).join('');
+      return `<tr>
+        <td style="padding:6px 12px;border:1px solid #eee;font-size:13px;white-space:nowrap;
+                   ${p.deleted ? 'color:#bbb;font-style:italic;' : ''}">${esc(p.name)}</td>
+        <td style="padding:6px 10px;border:1px solid #eee;text-align:center;font-size:13px;
+                   color:var(--text-muted)">${p.holes}</td>
+        ${timeCells}
+        ${statCells}
+      </tr>`;
+    }).join('');
+  }
+
+  function buildTable(pList, statHeaders, groupLabel) {
+    if (!pList.length) return '';
+    const statHdrCells = statHeaders.map(h => `<th style="${statHdrStyle}">${h}</th>`).join('');
+    return `
+      <div style="font-size:13px;font-weight:700;color:var(--green-dark);margin:16px 0 6px">${groupLabel}</div>
+      <div style="overflow-x:auto;margin-bottom:16px">
+        <table style="border-collapse:collapse;min-width:400px">
+          <thead>
+            <tr>
+              <th style="padding:6px 12px;border:1px solid #ddd;background:#e8f0eb;font-size:13px;
+                         text-align:left;color:var(--green-dark)">Player</th>
+              <th style="padding:6px 10px;border:1px solid #ddd;background:#e8f0eb;font-size:12px;
+                         text-align:center;color:var(--green-dark)">Holes</th>
+              ${weekHeaders}
+              ${statHdrCells}
+            </tr>
+          </thead>
+          <tbody>${buildRows(pList)}</tbody>
+        </table>
+      </div>`;
+  }
+
+  const table18 = buildTable(players18,
+    ['≤ 9:00 AM', '> 9:45 AM'],
+    '18-Hole Players');
+
+  const table9 = buildTable(players9,
+    ['9:30–10:00', '10:00–10:30', '10:30–11:00', 'After 11:00'],
+    '9-Hole Players');
 
   return `
     <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;
                 color:var(--green-dark);margin-bottom:4px">Tee Time History</div>
-    <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">
-      ${players.length} players · ${weeks.length} weeks played · sorted alphabetically
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:4px">
+      ${players.length} players · ${weeks.length} weeks played · 18-hole first, then alphabetical
+    </div>
+    <div style="font-size:12px;color:#1a2a5a;margin-bottom:16px">
+      Blue columns show tee time distribution counts for each player.
     </div>
     <div style="margin-bottom:12px">
       <button class="btn-ghost dark btn-sm" onclick="downloadTeeTimeHistoryCSV()">⬇ Download as CSV</button>
     </div>
-    <div style="overflow-x:auto">
-      <table style="border-collapse:collapse;width:100%;min-width:400px">
-        <thead>
-          <tr>
-            <th style="padding:6px 12px;border:1px solid #ddd;background:#e8f0eb;font-size:13px;
-                       text-align:left;color:var(--green-dark)">Player</th>
-            <th style="padding:6px 10px;border:1px solid #ddd;background:#e8f0eb;font-size:12px;
-                       text-align:center;color:var(--green-dark)">Holes</th>
-            ${weekHeaders}
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>`;
+    ${table18}${table9}`;
 }
 
 function downloadTeeTimeHistoryCSV() {
@@ -2666,29 +2738,42 @@ function downloadTeeTimeHistoryCSV() {
   if (!data) { showToast('No history to download'); return; }
 
   const { weeks, players } = data;
+  const players18 = players.filter(p => p.holes === 18);
+  const players9  = players.filter(p => p.holes === 9);
 
-  // Header row
-  const header = ['Player', 'Holes', ...weeks.map(w => `Wk ${w.week} (${w.date})`)];
+  const baseHeaders = ['Player', 'Holes', ...weeks.map(w => `Wk ${w.week} (${w.date})`)];
 
-  // Data rows
-  const rows = players.map(p => [
-    p.name,
-    p.holes,
-    ...p.times
+  const rows18 = players18.map(p => [
+    p.name, p.holes, ...p.times, ...p.stats
+  ]);
+  const rows9 = players9.map(p => [
+    p.name, p.holes, ...p.times, ...p.stats
   ]);
 
-  const csv = [header, ...rows].map(row =>
-    row.map(cell => {
-      const s = String(cell);
-      return s.includes(',') || s.includes('"') || s.includes('\n')
-        ? `"${s.replace(/"/g, '""')}"` : s;
-    }).join(',')
-  ).join('\n');
+  function toCSV(header, rows) {
+    return [header, ...rows].map(row =>
+      row.map(cell => {
+        const s = String(cell);
+        return s.includes(',') || s.includes('"') ? `"${s.replace(/"/g,'""')}"` : s;
+      }).join(',')
+    ).join('\n');
+  }
+
+  const header18 = [...baseHeaders, '<= 9:00 AM', '> 9:45 AM'];
+  const header9  = [...baseHeaders, '9:30-10:00', '10:00-10:30', '10:30-11:00', 'After 11:00'];
+
+  const csv = [
+    '18-HOLE PLAYERS',
+    toCSV(header18, rows18),
+    '',
+    '9-HOLE PLAYERS',
+    toCSV(header9, rows9)
+  ].join('\n');
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `golf-league-tee-time-history.csv`;
+  a.download = 'golf-league-tee-time-history.csv';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
