@@ -5,3 +5,4 @@ May 21 change: The screens for future weeks now have diagonal stripes running th
 June 1 change: regenerate buttom removed from review tee sheet window. bug about assigneing latest tee time for nine hole players fixed. message about pasting into Mailchimp changed to pasting to document or mail.
 June 1 change: added tee time assignment history report, under Roster tab
 June 1 change: bug was fixed about how the default time is set in the clock icon when changing a particular player's time constraints.
+July 1: for tee time assignment history, added calculations for the distribution of times in particular time periods to help the user to decide whether someone has been getting too many/too few assignments in a particular period 
