@@ -2374,7 +2374,7 @@ function copyTeeSheet(weekIndex) {
     const t = TEE_TIMES[slot.si];
     const names = slot.players.map(p => p.name + (p.carpool ? ` (CP${p.carpool})` : ''));
     html += `<tr>
-      <td style="${tdStyle}">${t.label} AM</td>
+      <td style="${tdStyle}">${t.label}</td>
       <td style="${tdStyle}">${slot.players[0]?.holes || ''}</td>
       <td style="${tdStyle}">${names[0] || ''}</td>
     </tr>`;
