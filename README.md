@@ -7,3 +7,4 @@ June 1 change: added tee time assignment history report, under Roster tab
 June 1 change: bug was fixed about how the default time is set in the clock icon when changing a particular player's time constraints.
 July 1: for tee time assignment history, added calculations for the distribution of times in particular time periods to help the user to decide whether someone has been getting too many/too few assignments in a particular period 
 July 14: fixed the double "AM AM" bug in the output tee time sheet
+July 14: added an alert if the save of data to jsonbin (when "commit week" is hit) does not complete, for some reason.
