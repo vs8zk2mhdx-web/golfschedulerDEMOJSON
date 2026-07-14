@@ -757,7 +757,7 @@ function loadLocal() {
 
 // ── JSONBin sync ──────────────────────────────────────────────────────────
 async function syncToJSONBin() {
-  if (!BIN_ID || !API_KEY) return;
+  if (!BIN_ID || !API_KEY) return true; // no sync configured — treat as success
   setSyncStatus('syncing');
   try {
     const resp = await fetch(`${JSONBIN_BASE}/${BIN_ID}`, {
@@ -770,9 +770,11 @@ async function syncToJSONBin() {
     });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     setSyncStatus('synced');
+    return true;
   } catch(e) {
     console.warn('JSONBin sync failed:', e);
     setSyncStatus('error');
+    return false;
   }
 }
 
@@ -2093,8 +2095,16 @@ function doCommit() {
   if (state.futureWeeks) delete state.futureWeeks[state.weekNum];
   currentAssignments = null;
   expandedPlayer = null;
-  saveToStorage();
+  saveLocal(); // save locally immediately
   showScreen('setup');
+  // Now sync to cloud and alert prominently if it fails
+  syncToJSONBin().then(ok => {
+    if (!ok) {
+      alert('⚠️ Week committed locally but could NOT be saved to the cloud.\n\n' +
+            'Your data is safe on this device, but your co-manager will not see the update.\n\n' +
+            'Please click the ☁️ Refresh button to try syncing again before closing the browser.');
+    }
+  });
 }
 
 
