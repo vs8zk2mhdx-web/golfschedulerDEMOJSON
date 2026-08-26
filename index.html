@@ -7,7 +7,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ── Reset & Base ───────────────────────────────────────────────────────────[...]
+/* ── Reset & Base ─────────────────────────────────────────────────────────��[...]*/
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
   --green-dark:  #1a3a2a;
@@ -34,7 +34,7 @@ body {
   font-size: 15px;
 }
 
-/* ── Header ─────────────────────────────────────────────────────────────[...]
+/* ── Header ───────────────────────────────────────────────────────────��[...]*/
 header {
   background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-mid) 100%);
   color: white;
@@ -46,7 +46,7 @@ header {
 }
 .logo { display: flex; align-items: center; gap: 12px; }
 .logo-icon { font-size: 28px; }
-.logo h1 { font-family: 'Source Sans 3', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: 0.3px; }
+.logo h1 { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; letter-spacing: 0.3px; }
 .logo p  { font-size: 12px; opacity: 0.75; letter-spacing: 0.5px; text-transform: uppercase; }
 .week-badge {
   background: var(--gold);
@@ -58,7 +58,7 @@ header {
   letter-spacing: 0.5px;
 }
 
-/* ── Data Bar ────────────────────────────────────────────────────────────[...]
+/* ── Data Bar ───────────────────────────────────────────────────────────[...]*/
 .data-bar {
   background: var(--green-dark);
   padding: 8px 20px;
@@ -69,7 +69,7 @@ header {
 }
 .data-bar span { color: rgba(255,255,255,0.6); font-size: 12px; letter-spacing: 0.5px; margin-right: 4px; }
 
-/* ── Navigation ───────────────────────────────────────────────────────────[...]
+/* ── Navigation ──────────────────────────────────────────────────────────�[...]*/
 nav {
   background: white;
   border-bottom: 2px solid var(--border);
@@ -93,10 +93,10 @@ nav {
 .nav-btn:hover { color: var(--green-mid); }
 .nav-btn.active { color: var(--green-dark); border-bottom-color: var(--green-mid); font-weight: 600; }
 
-/* ── Main ─────────────────────────────────────────────────────────────[...]
+/* ── Main ────────────────────────────────────────────────────────────�[...]*/
 main { max-width: 860px; margin: 0 auto; padding: 20px; }
 
-/* ── Buttons ───────────────────────────────────────────────────────────[...]
+/* ── Buttons ───────────────────────────────────────────────────────────�[...]*/
 button { cursor: pointer; font-family: 'Source Sans 3', sans-serif; transition: all 0.15s; border: none; }
 .btn-primary {
   background: var(--green-mid);
@@ -211,7 +211,7 @@ button { cursor: pointer; font-family: 'Source Sans 3', sans-serif; transition: 
   letter-spacing: 0.8px;
 }
 
-/* ── Stats Grid ────────────────────────────────────────────────────────────[...]
+/* ── Stats Grid ──────────────────────────────────────────────────────────[...]*/
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -230,7 +230,7 @@ button { cursor: pointer; font-family: 'Source Sans 3', sans-serif; transition: 
 .stat-num.blue { color: var(--blue); }
 .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
 
-/* ── Player Rows ────────────────────────────────────────────────────────── [...]
+/* ── Player Rows ─────────────────────────────────────────────────────────��[...]*/
 .player-row {
   display: flex;
   align-items: center;
@@ -280,7 +280,7 @@ button { cursor: pointer; font-family: 'Source Sans 3', sans-serif; transition: 
 }
 .chevron { font-size: 11px; color: var(--text-muted); margin-left: 4px; }
 
-/* ── Expand Panel ────────────────────────────────────────────────────────── */
+/* ── Expand Panel ─────────────────────────────────────────────────────────�[...]*/
 .expand-panel {
   padding: 12px 16px 14px 48px;
   background: #f7fbf7;
@@ -323,7 +323,7 @@ button { cursor: pointer; font-family: 'Source Sans 3', sans-serif; transition: 
 }
 .search-input:focus { outline: none; border-color: var(--green-mid); }
 
-/* ── Generate Bar ────────────────────────────────────────────────────────── */
+/* ── Generate Bar ─────────────────────────────────────────────────────────�[...]*/
 .generate-bar {
   background: var(--card-bg);
   border-radius: 10px;
@@ -336,7 +336,7 @@ button { cursor: pointer; font-family: 'Source Sans 3', sans-serif; transition: 
 }
 .generate-hint { font-size: 13px; color: var(--text-muted); }
 
-/* ── Tee Sheet ────────────────────────────────────────────────────────────[...]
+/* ── Tee Sheet ──────────────────────────────────────────────────────────�[...]*/
 .tee-sheet-header {
   background: var(--card-bg);
   border-radius: 10px;
@@ -447,7 +447,7 @@ button { cursor: pointer; font-family: 'Source Sans 3', sans-serif; transition: 
   margin-bottom: 16px;
 }
 
-/* ── History ────────────────────────────────────────────────────────────[...]
+/* ── History ───────────────────────────────────────────────────────────[...]*/
 .pair-row {
   display: flex;
   align-items: center;
@@ -476,7 +476,7 @@ button { cursor: pointer; font-family: 'Source Sans 3', sans-serif; transition: 
 }
 .week-row span:first-child { font-weight: 600; }
 
-/* ── Sync Indicator ────────────────────────────────────────────────────── */
+/* ── Sync Indicator ──────────────────────────────────────────────────────── *[...]*/
 .sync-indicator {
   width: 10px; height: 10px; border-radius: 50%;
   background: #888; transition: background 0.3s;
@@ -486,7 +486,8 @@ button { cursor: pointer; font-family: 'Source Sans 3', sans-serif; transition: 
 .sync-indicator.error   { background: var(--danger); }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-/* ── Modal overlay ───────────────────────────────────────────────────────── */
+/* ── Modal overlay ─────────────────────────────────────────────────────────[...]
+*/
 .modal-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.55);
   display: flex; align-items: center; justify-content: center; z-index: 1000;
@@ -508,7 +509,7 @@ button { cursor: pointer; font-family: 'Source Sans 3', sans-serif; transition: 
 .modal-input:focus { outline: none; border-color: var(--green-mid); }
 .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
-/* ── Toast ─────────────────────────────────────────────────────────────[...]
+/* ── Toast ───────────────────────────────────────────────────────────��[...]*/
 .toast {
   position: fixed;
   bottom: 24px;
@@ -545,7 +546,8 @@ button { cursor: pointer; font-family: 'Source Sans 3', sans-serif; transition: 
 .dropdown-item:hover { background: var(--bg); }
 .dropdown-item.has-data { font-weight: 600; color: var(--green-mid); }
 
-/* ── Responsive ───────────────────────────────────────────────────────────[...]
+/* ── Responsive ──────────────────────────────────────────────────────────[...]
+*/
 @media (max-width: 600px) {
   main { padding: 12px; }
   .stats-grid { grid-template-columns: repeat(3,1fr); gap: 8px; }
@@ -614,7 +616,7 @@ button { cursor: pointer; font-family: 'Source Sans 3', sans-serif; transition: 
 <script>
 'use strict';
 
-// ── Constants ────────────────────────────────────────────────────────────[...]
+// ── Constants ──────────────────────────────────────────────────────────�[...]
 const STORAGE_VERSION = '17';
 
 // ── Name cleaning ─────────────────────────────────────────────────────────
@@ -622,7 +624,7 @@ function cleanName(s) {
   return String(s).replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
-// ── Date helpers ──────────────────────────────────────────────────────────
+// ── Date helpers ─────────────────────────────────────────────────────────�[...]
 // Returns a Date object for week N (1-based) given a season start ISO string
 function weekDate(weekNum) {
   if (!state.seasonStartDate) return null;
@@ -648,11 +650,11 @@ function dateSlug(weekNum) {
     .toLowerCase().replace(/,/g,'').replace(/\s+/g,'-');
 }
 
-// ── Roster ─────────────────────────────────────────────────────────────[...]
+// ── Roster ───────────────────────────────────────────────────────────�[...]
 let ROSTER_RAW = [];
 let ROSTER     = [];
 
-// ── Tee Times ────────────────────────────────────────────────────────────[...]
+// ── Tee Times ──────────────────────────────────────────────────────────�[...]
 let TEE_TIMES = [];
 const SEASON_WEEKS = 20; // Total weeks in a season
 
@@ -676,7 +678,7 @@ function buildTeeTimes(startTimeStr) {
 
 TEE_TIMES = buildTeeTimes('08:30'); // overwritten after state loads
 
-// ── State ─────────────────────────────────────────────────────────────[...]
+// ── State ───────────────────────────────────────────────────────────��[...]
 let state = {
   weekNum: 1,
   seasonStartDate: null, // ISO date string "YYYY-MM-DD" for week 1
@@ -695,7 +697,7 @@ let expandedPlayer    = null;
 let searchTerm        = '';
 let currentScreen     = 'setup';
 
-// ── Persistence ─────────────────────────────────────────────────────────[...]
+// ── Persistence ─────────────────────────────────────────────────────────��[...]
 // Two modes:
 //   1. JSONBin sync (shared between users) — when BIN_ID and API_KEY are set
 //   2. localStorage only (single-user fallback)
@@ -755,7 +757,7 @@ function loadLocal() {
   } catch(e) { console.warn('Local load failed:', e); }
 }
 
-// ── JSONBin sync ──────────────────────────────────────────────────────────
+// ── JSONBin sync ─────────────────────────────────────────────────────────�[...]
 async function syncToJSONBin() {
   if (!BIN_ID || !API_KEY) return true; // no sync configured — treat as success
   setSyncStatus('syncing');
